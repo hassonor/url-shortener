@@ -1,17 +1,8 @@
-"""
-logging_config.py
-
-Configures logging for the URL shortener service.
-"""
-
 import logging
 import sys
-from shortener.src.infrastructure.config import settings
+from infrastructure.config import settings
 
 def setup_logging() -> logging.Logger:
-    """
-    Configure logging based on environment settings.
-    """
     logging.basicConfig(
         level=settings.LOG_LEVEL,
         format=settings.LOG_FORMAT,

@@ -1,37 +1,73 @@
+version: "3.9"
+
 services:
-  shortener:
-    build: ../../services/shortener
-    container_name: shortener
-    ports:
-      - "8080:8080"
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.1
     environment:
-      # These can be hardcoded or come from a .env file
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: shortener
+      ZOOKEEPER_CLIENT_PORT: 2181
+    ports:
+      - "21810:2181"
+    networks:
+      - my_network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.1
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    ports:
+      - "9092:9092"
+    networks:
+      - my_network
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    environment:
+      KAFKA_CLUSTERS_0_NAME: "Local"
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka:9092"
+    ports:
+      - "8085:8080"
+    depends_on:
+      - kafka
+    networks:
+      - my_network
+
+  shortener:
+    build: shortener
+    ports:
+      - "8001:8001"
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "password"
+      POSTGRES_DB: "shortener"
       DATABASE_URL: "postgresql://postgres:password@postgres:5432/shortener"
       REDIS_URL: "redis://redis:6379/0"
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - postgres
+      - redis
+      - kafka
     networks:
       - my_network
 
   postgres:
     image: postgres:14-alpine
-    container_name: postgres
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "password"
+      POSTGRES_DB: "shortener"
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} -h postgres"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d shortener -h postgres"]
       interval: 5s
       timeout: 10s
       retries: 5
@@ -40,23 +76,20 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4:latest
-    container_name: pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_EMAIL: "admin@admin.com"
+      PGADMIN_DEFAULT_PASSWORD: "admin"
     ports:
       - "5050:80"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
     networks:
       - my_network
 
   redis:
     image: redis:7-alpine
-    container_name: redis
     command: ["redis-server", "--save", "", "--appendonly", "no"]
     volumes:
       - redisdata:/data
@@ -72,7 +105,6 @@ services:
 
   redis-commander:
     image: ghcr.io/joeferner/redis-commander:latest
-    container_name: redis-commander
     restart: always
     environment:
       REDIS_HOSTS: "local:redis:6379"
@@ -80,8 +112,7 @@ services:
       - "8081:8081"
     user: "root"
     depends_on:
-      redis:
-        condition: service_healthy
+      - redis
     networks:
       - my_network
 

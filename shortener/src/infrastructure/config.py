@@ -1,11 +1,6 @@
-"""
-config.py
+from pydantic_settings import BaseSettings
+from pydantic import Field
 
-Provides configuration settings for the URL shortener service using pydantic's BaseSettings.
-Loads values from environment variables.
-"""
-
-from pydantic import BaseSettings, Field
 
 class Settings(BaseSettings):
     # Logging
@@ -24,8 +19,17 @@ class Settings(BaseSettings):
     REDIS_PORT: int = Field(6379, env="REDIS_PORT")
     REDIS_DB: int = Field(0, env="REDIS_DB")
 
+    # Kafka
+    KAFKA_BOOTSTRAP_SERVERS: str = Field("kafka:9092", env="KAFKA_BOOTSTRAP_SERVERS")
+    URL_CREATED_TOPIC: str = Field("url_created_events", env="URL_CREATED_TOPIC")
+
     # Application
-    BASE_URL: str = Field("http://localhost:8080", env="BASE_URL")
+    BASE_URL: str = Field("http://localhost:8001", env="BASE_URL")
+    DOWNLOAD_TIMEOUT: int = Field(30, env="DOWNLOAD_TIMEOUT")
+    METRICS_PORT: int = Field(8000, env="METRICS_PORT")
+
+    BLOOM_EXPECTED_ITEMS: int = Field(10_000_000, env="BLOOM_EXPECTED_ITEMS")
+    BLOOM_ERROR_RATE: float = Field(0.0001, env="BLOOM_ERROR_RATE")
 
     class Config:
         env_file = ".env"

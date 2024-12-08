@@ -51,6 +51,14 @@ class Database:
                 return result["long_url"]
             return None
 
+    async def get_short_code_by_long_url(self, long_url: str) -> Optional[str]:
+        query = "SELECT short_code FROM url_mappings WHERE long_url = $1;"
+        async with self.pool.acquire() as conn:
+            result = await conn.fetchrow(query, long_url)
+            if result:
+                return result["short_code"]
+            return None
+
     async def close(self):
         if self.pool:
             await self.pool.close()
