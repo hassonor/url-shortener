@@ -1,12 +1,13 @@
+# interface/api.py
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from domain.url_shortener_service import URLShortenerService
 from infrastructure.database import database
 from infrastructure.redis_client import redis_client
 from application.messaging.publishers import publish_url_created
-from infrastructure.bloom import bloom_filter, bloom_lock
 from infrastructure.config import settings
+from infrastructure.bloom import bloom_filter, bloom_lock
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
 app = FastAPI(title="URL Shortener API", version="1.0.0")
 
@@ -36,8 +37,17 @@ async def redirect_short_code(short_code: str):
     long_url = await service.get_long_url(short_code)
     if not long_url:
         raise HTTPException(status_code=404, detail="Not Found")
+    # Return a real redirect
+    from fastapi.responses import RedirectResponse
     return RedirectResponse(url=long_url, status_code=301)
 
 @app.get("/health")
 async def health_check():
     return {"status": "ok", "service": "url_shortener"}
+
+@app.get("/metrics")
+async def metrics():
+    # Expose prometheus metrics
+    from starlette.responses import Response
+    data = generate_latest()
+    return Response(content=data, media_type=CONTENT_TYPE_LATEST)
