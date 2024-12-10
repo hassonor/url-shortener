@@ -1,0 +1,48 @@
+# Pre-commit configuration
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks and configuration.
+
+repos:
+  # Official pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        # Removes trailing whitespace in all text files
+      - id: end-of-file-fixer
+        # Ensures files end with a newline
+      - id: check-yaml
+        # Validates YAML files
+      - id: check-added-large-files
+        # Prevents adding large files to the repository
+      - id: check-merge-conflict
+        # Checks that files do not contain merge conflict strings
+      - id: debug-statements
+        # Ensures no print or pdb statements remain in production code
+
+  # Black for code formatting
+  - repo: https://github.com/psf/black
+    rev: 24.10.0
+    hooks:
+      - id: black
+        language_version: python3.11
+        additional_dependencies: []
+        # Auto-formats Python code using Black
+
+  # isort for import sorting
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        language_version: python3.11
+        # Sorts imports based on PEP8 standards
+
+  # Ruff for linting and code quality checks
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.8.2
+    hooks:
+      - id: ruff
+        language_version: python3.11
+        additional_dependencies: []
+        # Ruff is a fast Python linter, also can replace flake8 + isort checks if configured
+        # Adjust pyproject.toml or ruff.toml for configuration if needed
