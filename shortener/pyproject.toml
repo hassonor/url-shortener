@@ -1,12 +1,10 @@
-# pyproject.toml
-
 [tool.black]
 line-length = 99
-target-version = ["py39"]  # Adjust to your Python version as needed
+target-version = ["py39"]  # Adjust to your Python version
 
 [tool.isort]
 profile = "black"
-line_length = 99  # Use underscore instead of hyphen
+line_length = 99
 known_third_party = ["flask", "requests"]
 sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
 default_section = "THIRDPARTY"
