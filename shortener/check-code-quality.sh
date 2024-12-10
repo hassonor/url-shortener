@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-EXIT_STATUS=0
+set -e
 
-# If a virtual environment exists, activate it
+# Activate virtual environment if present
 if [[ -f ".venv/bin/activate" ]]; then
     source .venv/bin/activate
 fi
@@ -17,5 +17,3 @@ echo "Running ruff..."
 ruff check . --fix
 
 echo "All code quality checks passed!"
-
-exit $EXIT_STATUS
