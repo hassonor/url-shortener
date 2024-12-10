@@ -27,7 +27,11 @@ async def message_callback(raw_message: bytes):
             )
         else:
             logger.debug(
-                {"action": "message_callback", "status": "unknown_event", "event_data": data}
+                {
+                    "action": "message_callback",
+                    "status": "unknown_event",
+                    "event_data": data,
+                }
             )
     except Exception as e:
         logger.exception(

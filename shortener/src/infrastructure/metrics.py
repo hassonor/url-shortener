@@ -22,8 +22,12 @@ kafka_produce_latency = Histogram(
 )
 
 # New Database metrics
-db_operations_success = Counter("db_operations_success_total", "Count of successful DB operations")
-db_operations_failure = Counter("db_operations_failure_total", "Count of failed DB operations")
+db_operations_success = Counter(
+    "db_operations_success_total", "Count of successful DB operations"
+)
+db_operations_failure = Counter(
+    "db_operations_failure_total", "Count of failed DB operations"
+)
 db_query_latency = Histogram("db_query_latency_seconds", "Latency of DB queries")
 
 

@@ -2,9 +2,13 @@ import logging
 
 import pybreaker
 import redis.asyncio as redis
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
-
 from infrastructure.config import settings
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -32,24 +36,38 @@ class RedisClient:
             await self.redis.ping()
             logger.info({"action": "connect_redis", "status": "connected"})
         except Exception as e:
-            logger.exception({"action": "connect_redis", "status": "failed", "error": str(e)})
+            logger.exception(
+                {"action": "connect_redis", "status": "failed", "error": str(e)}
+            )
             raise
 
     @redis_breaker
     async def cache_short_code(self, short_code: str, long_url: str):
         if self._closing:
             logger.info(
-                {"action": "cache_short_code", "short_code": short_code, "status": "shutting_down"}
+                {
+                    "action": "cache_short_code",
+                    "short_code": short_code,
+                    "status": "shutting_down",
+                }
             )
             return
         key = f"url:{short_code}"
         logger.debug(
-            {"action": "cache_short_code", "short_code": short_code, "long_url": long_url}
+            {
+                "action": "cache_short_code",
+                "short_code": short_code,
+                "long_url": long_url,
+            }
         )
         try:
             await self.redis.set(key, long_url, ex=3600)
             logger.info(
-                {"action": "cache_short_code", "short_code": short_code, "status": "cached"}
+                {
+                    "action": "cache_short_code",
+                    "short_code": short_code,
+                    "status": "cached",
+                }
             )
         except Exception as e:
             logger.warning(
@@ -80,7 +98,11 @@ class RedisClient:
             val = await self.redis.get(key)
             status = "found" if val else "not_found"
             logger.debug(
-                {"action": "get_long_url_redis", "short_code": short_code, "status": status}
+                {
+                    "action": "get_long_url_redis",
+                    "short_code": short_code,
+                    "status": status,
+                }
             )
             return val
         except Exception as e:

@@ -5,7 +5,9 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     # Logging
     LOG_LEVEL: str = Field("INFO", env="LOG_LEVEL")
-    LOG_FORMAT: str = Field("%(asctime)s [%(levelname)s] %(name)s: %(message)s", env="LOG_FORMAT")
+    LOG_FORMAT: str = Field(
+        "%(asctime)s [%(levelname)s] %(name)s: %(message)s", env="LOG_FORMAT"
+    )
 
     # PostgreSQL
     PG_HOST: str = Field("postgres", env="PG_HOST")

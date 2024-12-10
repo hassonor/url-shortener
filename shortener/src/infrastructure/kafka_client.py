@@ -5,7 +5,6 @@ import time
 
 import pybreaker
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
-
 from infrastructure.config import settings
 from infrastructure.metrics import (
     kafka_produce_failure,
@@ -47,7 +46,11 @@ class KafkaClient:
                 await self.producer.start()
                 self.producer_connected = True
                 logger.info(
-                    {"action": "connect_producer", "status": "connected", "attempt": attempt}
+                    {
+                        "action": "connect_producer",
+                        "status": "connected",
+                        "attempt": attempt,
+                    }
                 )
                 return
             except Exception as e:
@@ -72,14 +75,18 @@ class KafkaClient:
                     )
                     await asyncio.sleep(delay)
                 else:
-                    logger.error({"action": "connect_producer", "status": "failed_all_retries"})
+                    logger.error(
+                        {"action": "connect_producer", "status": "failed_all_retries"}
+                    )
                     raise
 
     async def connect_consumer(self, topic: str, group_id: str = "url_shortener_group"):
         max_retries = 5
         for attempt in range(1, max_retries + 1):
             if self._closing:
-                logger.info({"action": "connect_consumer", "status": "aborted", "topic": topic})
+                logger.info(
+                    {"action": "connect_consumer", "status": "aborted", "topic": topic}
+                )
                 return
             try:
                 self.consumer = AIOKafkaConsumer(
@@ -141,25 +148,38 @@ class KafkaClient:
         elapsed = time.time() - start_time
         kafka_produce_latency.observe(elapsed)
         kafka_produce_success.inc()
-        logger.debug({"action": "produce_message", "topic": topic, "status": "produced"})
+        logger.debug(
+            {"action": "produce_message", "topic": topic, "status": "produced"}
+        )
 
     async def produce(self, topic: str, message: bytes):
         if self._closing:
             logger.warning(
-                {"action": "produce_message", "topic": topic, "status": "shutdown_in_progress"}
+                {
+                    "action": "produce_message",
+                    "topic": topic,
+                    "status": "shutdown_in_progress",
+                }
             )
             return
         try:
             await self._produce_with_breaker(topic, message)
         except pybreaker.CircuitBreakerError:
-            logger.warning({"action": "produce_message", "topic": topic, "status": "circuit_open"})
+            logger.warning(
+                {"action": "produce_message", "topic": topic, "status": "circuit_open"}
+            )
             kafka_produce_failure.inc()
             # Optionally fallback to dead-letter if needed
             raise
         except Exception as e:
             kafka_produce_failure.inc()
             logger.exception(
-                {"action": "produce_message", "topic": topic, "status": "failure", "error": str(e)}
+                {
+                    "action": "produce_message",
+                    "topic": topic,
+                    "status": "failure",
+                    "error": str(e),
+                }
             )
             # Optionally fallback here
             raise
@@ -171,13 +191,17 @@ class KafkaClient:
         try:
             async for msg in self.consumer:
                 if self._closing:
-                    logger.info({"action": "consume_forever", "status": "shutting_down"})
+                    logger.info(
+                        {"action": "consume_forever", "status": "shutting_down"}
+                    )
                     break
                 await callback(msg.value)
         except asyncio.CancelledError:
             logger.info({"action": "consume_forever", "status": "cancelled"})
         except Exception as e:
-            logger.exception({"action": "consume_forever", "status": "error", "error": str(e)})
+            logger.exception(
+                {"action": "consume_forever", "status": "error", "error": str(e)}
+            )
 
     async def close(self):
         self._closing = True
