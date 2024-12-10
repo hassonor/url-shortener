@@ -1,16 +1,17 @@
 import logging
 import uuid
 
+from fastapi import FastAPI, HTTPException, Request
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+from pydantic import BaseModel
+
 from application.messaging.publishers import publish_url_created
 from domain.url_shortener_service import URLShortenerService
-from fastapi import FastAPI, HTTPException, Request
 from infrastructure.bloom import bloom_filter, bloom_lock
 from infrastructure.config import settings
 from infrastructure.database import database
 from infrastructure.kafka_client import kafka_client
 from infrastructure.redis_client import redis_client
-from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
-from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -54,9 +55,7 @@ async def shorten(request: ShortenRequest, req: Request):
         raise HTTPException(status_code=400, detail="Invalid URL")
 
     if newly_created:
-        await publish_url_created(
-            short_code, request.longUrl, correlation_id=correlation_id
-        )
+        await publish_url_created(short_code, request.longUrl, correlation_id=correlation_id)
 
     logger.info(
         {

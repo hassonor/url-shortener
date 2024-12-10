@@ -4,18 +4,14 @@ import time
 
 import pybreaker
 import redis.asyncio as redis
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
+
 from infrastructure.config import settings
 from infrastructure.kafka_client import kafka_client
 from infrastructure.metrics import (
     kafka_produce_failure,
     kafka_produce_latency,
     kafka_produce_success,
-)
-from tenacity import (
-    retry,
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_exponential,
 )
 
 logger = logging.getLogger(__name__)
@@ -44,9 +40,7 @@ fallback_redis = redis.Redis(
     wait=wait_exponential(multiplier=1, min=1, max=10),
     retry=retry_if_exception_type(KafkaPublishError),
 )
-async def publish_url_created(
-    short_code: str, long_url: str, correlation_id: str = None
-):
+async def publish_url_created(short_code: str, long_url: str, correlation_id: str = None):
     """
     Publish a "URL_CREATED" event to Kafka with retries, circuit breaker, and fallback.
     """

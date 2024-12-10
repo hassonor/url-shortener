@@ -2,13 +2,9 @@ import logging
 
 import pybreaker
 import redis.asyncio as redis
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
+
 from infrastructure.config import settings
-from tenacity import (
-    retry,
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_exponential,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -36,9 +32,7 @@ class RedisClient:
             await self.redis.ping()
             logger.info({"action": "connect_redis", "status": "connected"})
         except Exception as e:
-            logger.exception(
-                {"action": "connect_redis", "status": "failed", "error": str(e)}
-            )
+            logger.exception({"action": "connect_redis", "status": "failed", "error": str(e)})
             raise
 
     @redis_breaker

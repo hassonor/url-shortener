@@ -5,10 +5,11 @@ from typing import Optional, Tuple
 from urllib.parse import urlparse
 
 from asyncpg import UniqueViolationError
+from pybloom_live import BloomFilter
+
 from infrastructure.database import Database
 from infrastructure.metrics import url_created, url_lookup_latency
 from infrastructure.redis_client import RedisClient
-from pybloom_live import BloomFilter
 
 logger = logging.getLogger(__name__)
 

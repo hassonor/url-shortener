@@ -1,6 +1,7 @@
 import logging
 
 import uvicorn
+
 from interface.api import app
 
 logger = logging.getLogger(__name__)

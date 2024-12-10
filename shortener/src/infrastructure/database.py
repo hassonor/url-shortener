@@ -3,13 +3,9 @@ from typing import Optional
 
 import asyncpg
 from asyncpg import UniqueViolationError
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
+
 from infrastructure.config import settings
-from tenacity import (
-    retry,
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_exponential,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -77,9 +73,7 @@ class Database:
         INSERT INTO url_mappings (short_code, long_url) VALUES ($1, $2)
         ON CONFLICT DO NOTHING;
         """
-        logger.debug(
-            "Attempting to insert short_code=%s, long_url=%s", short_code, long_url
-        )
+        logger.debug("Attempting to insert short_code=%s, long_url=%s", short_code, long_url)
         async with self.pool.acquire() as conn:
             try:
                 result = await conn.execute(insert_query, short_code, long_url)
@@ -91,14 +85,10 @@ class Database:
                         long_url,
                     )
                 else:
-                    logger.info(
-                        "No insert performed, short_code=%s already exists.", short_code
-                    )
+                    logger.info("No insert performed, short_code=%s already exists.", short_code)
             except UniqueViolationError:
                 # This is expected if the short_code already exists
-                logger.info(
-                    "Short code %s already exists, no insert needed.", short_code
-                )
+                logger.info("Short code %s already exists, no insert needed.", short_code)
             except asyncpg.PostgresError as e:
                 # Possibly transient if interface related, else permanent
                 logger.warning(
