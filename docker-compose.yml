@@ -5,6 +5,7 @@ services:
     image: confluentinc/cp-zookeeper:7.4.1
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
+      ALLOW_ANONYMOUS_LOGIN: "yes"
     ports:
       - "21810:2181"
     networks:
@@ -25,6 +26,11 @@ services:
       - "9092:9092"
     networks:
       - my_network
+    healthcheck:
+      test: [ "CMD-SHELL", "kafka-topics --bootstrap-server kafka:9092 --list || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -117,14 +123,37 @@ services:
     networks:
       - my_network
 
+  redis_exporter:
+    image: oliver006/redis_exporter:latest
+    environment:
+      REDIS_ADDR: "redis:6379"
+    ports:
+      - "9121:9121"
+    depends_on:
+      - redis
+    networks:
+      - my_network
+
   kafka-exporter:
     image: danielqsj/kafka-exporter:latest
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     environment:
       KAFKA_SERVER: "kafka:9092"
     ports:
       - "9308:9308"
+    networks:
+      - my_network
+
+  postgres_exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:latest
+    environment:
+      DATA_SOURCE_NAME: "postgresql://postgres:password@postgres:5432/shortener?sslmode=disable"
+    ports:
+      - "9187:9187"
+    depends_on:
+      - postgres
     networks:
       - my_network
 
@@ -146,6 +175,9 @@ services:
       - "3000:3000"
     depends_on:
       - prometheus
+    volumes:
+      - ./grafana/grafana.ini:/etc/grafana/grafana.ini
+      - ./grafana/provisioning:/etc/grafana/provisioning
     networks:
       - my_network
 
